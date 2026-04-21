@@ -1,25 +1,32 @@
-from flask import Flask, request, jsonify
+from http.server import BaseHTTPRequestHandler
+import json
+from urllib.parse import urlparse, parse_qs
 
-app = Flask(__name__)
+class handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        parsed = urlparse(self.path)
 
-@app.route('/')
-def home():
-    return "API Running ✅"
+        # ✅ Route
+        if parsed.path == "/api/number":
+            query = parse_qs(parsed.query)
+            num = query.get("num", ["No number"])[0]
 
-@app.route('/number')
-def number():
-    num = request.args.get('num')
+            self.send_response(200)
+            self.send_header('Content-type','application/json')
+            self.end_headers()
 
-    db = {
-        "9998887779": {
-            "name": "Radhe Gupta",
-            "city": "Mithapur"
-        }
-    }
+            response = {
+                "status": "success",
+                "number": num,
+                "name": "Radhe Gupta",
+                "city": "Mithapur"
+            }
 
-    if num in db:
-        return jsonify({"status": "success", "data": db[num]})
-    else:
-        return jsonify({"status": "not found"})
+            self.wfile.write(json.dumps(response).encode())
 
-app.run(host="0.0.0.0", port=10000)
+        # ✅ Root fix
+        else:
+            self.send_response(200)
+            self.send_header('Content-type','text/plain')
+            self.end_headers()
+            self.wfile.write(b"API Running ✅ Use /api/number")
